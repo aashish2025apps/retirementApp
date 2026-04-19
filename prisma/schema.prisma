@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String     @id
+  email     String     @unique
+  scenarios Scenario[]
+  createdAt DateTime   @default(now())
+}
+
+model Scenario {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  isDefault      Boolean  @default(false)
+  profile        Json     @default("{}")
+  income         Json     @default("{}")
+  accounts       Json     @default("{}")
+  mortgage       Json     @default("{}")
+  debts          Json     @default("{}")
+  education      Json     @default("{}")
+  healthcare     Json     @default("{}")
+  spending       Json     @default("{}")
+  socialSecurity Json     @default("{}")
+  assumptions    Json     @default("{}")
+  windfalls      Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
