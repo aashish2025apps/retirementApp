@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ScenarioData } from "@/lib/types";
-import { getDefaultScenarioData } from "@/lib/calculations/engine";
+import { getBlankScenarioData } from "@/lib/calculations/engine";
 
 interface ScenarioMeta {
   id: string;
@@ -17,20 +17,24 @@ interface RetirementStore {
   scenarioList: ScenarioMeta[];
   scenarioData: ScenarioData;
   isDirty: boolean;
+  // tracks whether this browser session has loaded data for the signed-in user
+  loadedUserId: string | null;
   setActiveScenario: (id: string) => void;
   setScenarioList: (list: ScenarioMeta[]) => void;
   updateScenarioData: (data: Partial<ScenarioData>) => void;
   resetToDefault: () => void;
   markClean: () => void;
+  initForUser: (userId: string) => void;
 }
 
 export const useRetirementStore = create<RetirementStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       activeScenarioId: null,
       scenarioList: [],
-      scenarioData: getDefaultScenarioData(),
+      scenarioData: getBlankScenarioData(),
       isDirty: false,
+      loadedUserId: null,
       setActiveScenario: (id) => set({ activeScenarioId: id }),
       setScenarioList: (list) => set({ scenarioList: list }),
       updateScenarioData: (data) =>
@@ -39,32 +43,49 @@ export const useRetirementStore = create<RetirementStore>()(
           isDirty: true,
         })),
       resetToDefault: () =>
-        set({ scenarioData: getDefaultScenarioData(), isDirty: false }),
+        set({ scenarioData: getBlankScenarioData(), isDirty: false }),
       markClean: () => set({ isDirty: false }),
+      // Call this on sign-in. If it's a different user, wipe local state.
+      initForUser: (userId: string) => {
+        if (get().loadedUserId !== userId) {
+          set({
+            scenarioData: getBlankScenarioData(),
+            activeScenarioId: null,
+            scenarioList: [],
+            isDirty: false,
+            loadedUserId: userId,
+          });
+        }
+      },
     }),
     {
       name: "retirement-store",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         scenarioData: state.scenarioData,
         activeScenarioId: state.activeScenarioId,
+        loadedUserId: state.loadedUserId,
       }),
       migrate: (persisted: unknown) => {
-        const state = persisted as { scenarioData?: { windfalls?: { items?: unknown[] } } };
+        const state = persisted as {
+          scenarioData?: { windfalls?: { items?: unknown[] } };
+          loadedUserId?: string | null;
+        };
+        // Ensure loadedUserId exists after migration
+        if (!("loadedUserId" in state)) {
+          (state as Record<string, unknown>).loadedUserId = null;
+        }
         if (state?.scenarioData?.windfalls?.items) {
           state.scenarioData.windfalls.items = state.scenarioData.windfalls.items.map(
             (w: unknown) => {
               const wf = w as Record<string, unknown>;
-              // Old shape had slices[]; new shape has exchangeFund / sellDiversify / holdCash
               if (!wf.exchangeFund) {
                 const slices = (wf.slices as Record<string, unknown>[] | undefined) ?? [];
                 const ef = slices.find((s) => s.strategy === "exchange-fund");
                 const sd = slices.find((s) => s.strategy === "sell-diversify");
                 const hc = slices.find((s) => s.strategy === "hold-cash");
                 return {
-                  id: wf.id,
-                  name: wf.name,
-                  age: wf.age,
+                  id: wf.id, name: wf.name, age: wf.age,
                   exchangeFund: ef
                     ? { amount: ef.amount, costBasisPct: ef.costBasisPct, ltcgRatePct: ef.ltcgRatePct, lockupYears: ef.lockupYears ?? 7 }
                     : { amount: 0, costBasisPct: 0, ltcgRatePct: 23.8, lockupYears: 7 },

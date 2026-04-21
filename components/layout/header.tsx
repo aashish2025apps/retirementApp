@@ -1,15 +1,20 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRetirementStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Save, Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void }) {
-  const { isDirty, activeScenarioId } = useRetirementStore();
+  const { isDirty, activeScenarioId, initForUser } = useRetirementStore();
+  const { user } = useUser();
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) initForUser(user.id);
+  }, [user?.id, initForUser]);
 
   async function handleSave() {
     if (!activeScenarioId || !isDirty) return;

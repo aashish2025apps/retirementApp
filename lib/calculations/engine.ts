@@ -469,6 +469,59 @@ export function runProjection(data: ScenarioData): ProjectionResult {
   };
 }
 
+export function getBlankScenarioData(): ScenarioData {
+  return {
+    profile: {
+      currentAge: 0,
+      retirementAge: 0,
+      lifeExpectancy: 0,
+      state: "",
+      filingStatus: "single",
+      hasSpouse: false,
+    },
+    income: {
+      annualSalary: 0,
+      annualRaise: 3,
+      spouseAnnualSalary: 0,
+      spouseAnnualRaise: 3,
+      bonusAmount: 0,
+    },
+    accounts: {
+      k401Balance: 0, rothBalance: 0, iraBalance: 0,
+      taxableBalance: 0, hsaBalance: 0,
+      spouseK401Balance: 0, spouseRothBalance: 0, spouseIraBalance: 0,
+      k401Contribution: 0, rothContribution: 0, iraContribution: 0,
+      taxableContribution: 0, hsaContribution: 0,
+      spouseK401Contribution: 0, spouseRothContribution: 0, spouseIraContribution: 0,
+      employerMatchPercent: 0, employerMatchLimit: 0,
+    },
+    spending: {
+      monthlyBudget: 0,
+      currentExpenses: {
+        housing: 0, transportation: 0, food: 0, utilities: 0,
+        insurance: 0, healthcare: 0, childcare: 0,
+        entertainment: 0, travel: 0, other: 0,
+      },
+    },
+    assumptions: {
+      stockReturnRate: 7,
+      bondReturnRate: 4,
+      inflationRate: 3,
+      stockAllocation: 80,
+      effectiveTaxRate: 22,
+    },
+    debts: {
+      hasMortgage: false,
+      mortgage: { homeValue: 0, remainingBalance: 0, monthlyPayment: 0, interestRate: 6.5, remainingYears: 30, homeAppreciationRate: 3 },
+      otherDebts: [],
+    },
+    education: { children: [] },
+    socialSecurity: { monthlyBenefitAtFRA: 0, claimingAge: 67, hasSpouseBenefit: false, spouseMonthlyBenefitAtFRA: 0, spouseClaimingAge: 67 },
+    windfalls: { items: [] as import("../types").Windfall[] },
+    rothConversion: { strategy: "none", targetBracketRate: 22, fixedAnnualAmount: 0, startAge: 65, endAge: 72 },
+  };
+}
+
 export function getDefaultScenarioData(): ScenarioData {
   return {
     profile: {
